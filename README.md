@@ -1,5 +1,9 @@
 # 🚀 초패스트 동시편집 todo-list (feat. yorkie)
 
+포스트 작성용으로 만든 초간단 슈퍼패스트 동시편집 todo-list 앱입니다.
+
+<br/>
+
 ## 🖥️ how to use
 
 CRA로 생성된 react-project 입니다. 해당 프로젝트에서 사용하는 라이브러리의 `api-key`만 발급해주시면 곧바로 사용가능합니다.
