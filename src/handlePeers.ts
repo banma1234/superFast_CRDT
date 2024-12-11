@@ -19,7 +19,7 @@ const randomPeers = [
 ];
 
 /**
- * display each peer's name
+ * 접속중인 유저들 출력
  */
 export function displayPeers(
   peers: Array<{ clientID: string; presence: Indexable }>,
@@ -33,7 +33,7 @@ export function displayPeers(
 }
 
 /**
- * create random name of anonymous peer
+ * 랜덤하게 유저명 생성
  */
 export function createRandomPeers() {
   const index = Math.floor(Math.random() * randomPeers.length);

@@ -3,6 +3,7 @@ import yorkie, { DocEventType, Document, JSONArray } from "yorkie-js-sdk";
 import { useState, useEffect } from "react";
 import { displayPeers, createRandomPeers } from "./handlePeers";
 import { Todo } from "./type";
+import Main from "./main";
 
 /**
  * `ENV` = api 요청 관련 환경변수 객체
@@ -34,7 +35,7 @@ function App() {
   const [peers, setPeers] = useState<string[]>([]);
   const [doc] = useState<Document<{ todo: JSONArray<Todo> }>>(
     // "doTest"라는 이름의 새로운 문서 생성
-    () => new yorkie.Document("production")
+    () => new yorkie.Document("production"),
   );
 
   /**
@@ -47,7 +48,7 @@ function App() {
      * @returns {void}
      */
     addTodo(todo: string): void {
-      doc.update((root) => {
+      doc.update(root => {
         /** 삽입될 todo의 index값 */
         const index =
           root.todo.reduce((maxId, todo) => Math.max(todo.id, maxId), -1) + 1;
@@ -66,7 +67,7 @@ function App() {
      * @returns {void}
      */
     deleteTodo(id: number): void {
-      doc.update((root) => {
+      doc.update(root => {
         let target = undefined;
 
         for (const item of root.todo) {
@@ -91,7 +92,7 @@ function App() {
     });
 
     // subscribe document event of "PresenceChanged"(="peers-changed")
-    doc.subscribe("presence", (event) => {
+    doc.subscribe("presence", event => {
       if (event.type !== DocEventType.PresenceChanged) {
         setPeers(displayPeers(doc.getPresences()));
       }
@@ -105,7 +106,7 @@ function App() {
      */
     async function attachDoc(
       doc: Document<{ todo: JSONArray<Todo> }>,
-      callback: (props: any) => void
+      callback: (props: any) => void,
     ): Promise<any> {
       // 01. activate client
       await client.activate();
@@ -117,14 +118,14 @@ function App() {
       });
 
       // 03. create default content if not exists.
-      doc.update((root) => {
+      doc.update(root => {
         if (!root.todo) {
           root.todo = defaultContent;
         }
       }, "create default content if not exists");
 
       // 04. subscribe doc's change event from local and remote.
-      doc.subscribe((event) => {
+      doc.subscribe(() => {
         callback(doc.getRoot().todo);
       });
 
@@ -133,7 +134,7 @@ function App() {
     }
 
     // doc 업데이트
-    attachDoc(doc, (todo) => setTodo(todo));
+    attachDoc(doc, todo => setTodo(todo));
   }, []);
 
   return (
@@ -145,25 +146,25 @@ function App() {
         })}{" "}
         ]
       </p>
-      <div className="todo">
-        {todo.map((item, i) => {
-          return (
-            <div className="todo__container" key={i}>
-              <p>{item.content}</p>
-              <button onClick={() => actions.deleteTodo(item.id)}>x</button>
-            </div>
-          );
-        })}
-      </div>
+
+      <Main todo={todo} actions={actions} />
+
       <hr />
       <div className="todo__container">
         <input
           value={text}
-          onChange={(e) => {
+          onChange={e => {
             setText(e.target.value);
           }}
         />
         <button onClick={() => actions.addTodo(text)}>제출</button>
+        <button
+          onClick={() => {
+            todo.map(item => console.log(item.content));
+          }}
+        >
+          Check!
+        </button>
       </div>
     </div>
   );
