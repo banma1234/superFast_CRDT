@@ -1,18 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Todo } from "./type";
 
-export default function Main(props: { todo: Todo[]; actions: any }) {
+export default function Main(props: {
+  todo: Todo[];
+  actions: { [name: string]: Function };
+}) {
+  const [text, setText] = useState<string>("");
   const { todo, actions } = props;
-  const [test, setTest] = useState(todo);
 
-  useEffect(() => {
-    setTest(todo);
-  }, [todo]);
+  const submitTodo = () => {
+    console.log("submitTodo!\n");
+    console.log("text : ", text, "\n");
+    actions.addTodo(text);
+    setText("");
+  };
 
   return (
-    <section>
+    <>
       <div className="todo">
-        {test.map((item, i) => {
+        {todo.map((item, i) => {
           return (
             <div className="todo__container" key={i}>
               <p>{item.content}</p>
@@ -22,6 +28,15 @@ export default function Main(props: { todo: Todo[]; actions: any }) {
         })}
       </div>
       <hr />
-    </section>
+      <div className="todo__container">
+        <input
+          value={text}
+          onChange={e => {
+            setText(e.target.value);
+          }}
+        />
+        <button onClick={submitTodo}>제출</button>
+      </div>
+    </>
   );
 }

@@ -1,7 +1,6 @@
 import "./App.css";
-import yorkie, { DocEventType, Document, JSONArray } from "yorkie-js-sdk";
-import { useState, useEffect } from "react";
-import { displayPeers, createRandomPeers } from "./handlePeers";
+import yorkie, { Document, JSONArray } from "yorkie-js-sdk";
+import React, { useState, useEffect } from "react";
 import { Todo } from "./type";
 import Main from "./main";
 
@@ -23,19 +22,18 @@ const defaultContent = [
   { id: 1, content: "hello yorkie world" },
 ];
 
-function App() {
+export default function App() {
   /**
    * text = 사용자 입력 텍스트
    * todo = 실제로 document에 삽입될 todo item
    * peers = 문서에 참여한 사용자
    * doc = 사용자가 작업할 실제 문서(document)
    */
-  const [text, setText] = useState<string>("");
   const [todo, setTodo] = useState<Todo[]>([]);
   const [peers, setPeers] = useState<string[]>([]);
   const [doc] = useState<Document<{ todo: JSONArray<Todo> }>>(
     // "doTest"라는 이름의 새로운 문서 생성
-    () => new yorkie.Document("production"),
+    () => new yorkie.Document<{ todo: JSONArray<Todo> }>("REAL_NEW"),
   );
 
   /**
@@ -48,16 +46,18 @@ function App() {
      * @returns {void}
      */
     addTodo(todo: string): void {
+      console.log("Add todo\n");
       doc.update(root => {
         /** 삽입될 todo의 index값 */
         const index =
           root.todo.reduce((maxId, todo) => Math.max(todo.id, maxId), -1) + 1;
 
+        console.log(index, todo);
         root.todo.push({
           id: index,
           content: todo,
         });
-        setText("");
+        console.log(root.todo);
       });
     },
 
@@ -79,10 +79,16 @@ function App() {
 
         // target이 존재하는 경우 target의 고유 id를 이용해 제거
         if (target) {
+          console.log("target : ", target.getID());
           root.todo.deleteByID!(target.getID());
         }
       });
     },
+  };
+
+  const doTest = (damn: any) => {
+    setTodo(damn);
+    console.log(todo);
   };
 
   useEffect(() => {
@@ -91,12 +97,12 @@ function App() {
       apiKey: ENV.apiKey,
     });
 
-    // subscribe document event of "PresenceChanged"(="peers-changed")
-    doc.subscribe("presence", event => {
-      if (event.type !== DocEventType.PresenceChanged) {
-        setPeers(displayPeers(doc.getPresences()));
-      }
-    });
+    // // subscribe document event of "PresenceChanged"(="peers-changed")
+    // doc.subscribe("presence", event => {
+    //   if (event.type !== DocEventType.PresenceChanged) {
+    //     setPeers(displayPeers(doc.getPresences()));
+    //   }
+    // });
 
     /**
      * `document`(=doc)를 구독하고 `이벤트 발생`에 따라 적합한 조치를 취하는 함수
@@ -111,63 +117,44 @@ function App() {
       // 01. activate client
       await client.activate();
       // 02. attach the document into the client with presence
-      await client.attach(doc, {
-        initialPresence: {
-          userName: createRandomPeers(),
-        },
-      });
+      await client.attach(doc);
 
       // 03. create default content if not exists.
       doc.update(root => {
         if (!root.todo) {
           root.todo = defaultContent;
+        } else {
         }
       }, "create default content if not exists");
 
       // 04. subscribe doc's change event from local and remote.
-      doc.subscribe(() => {
+      doc.subscribe(event => {
         callback(doc.getRoot().todo);
       });
 
       // 05. set content to the attached document.
       callback(doc.getRoot().todo);
+      console.log("wow\n", doc.getRoot().todo, "\n");
     }
 
     // doc 업데이트
-    attachDoc(doc, todo => setTodo(todo));
+    attachDoc(doc, todo => {
+      console.log("todo : ", todo);
+      setTodo(todo);
+    });
   }, []);
 
   return (
     <div className="App">
-      <p>
+      <button onClick={() => console.log(doc.getRoot().todo)}>wow</button>
+      {/* <p>
         peers : [
         {peers.map((man, i) => {
           return <span key={i}> {man}, </span>;
         })}{" "}
         ]
-      </p>
-
+      </p> */}
       <Main todo={todo} actions={actions} />
-
-      <hr />
-      <div className="todo__container">
-        <input
-          value={text}
-          onChange={e => {
-            setText(e.target.value);
-          }}
-        />
-        <button onClick={() => actions.addTodo(text)}>제출</button>
-        <button
-          onClick={() => {
-            todo.map(item => console.log(item.content));
-          }}
-        >
-          Check!
-        </button>
-      </div>
     </div>
   );
 }
-
-export default App;
